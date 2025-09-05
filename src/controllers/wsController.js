@@ -30,7 +30,11 @@ function handleWebSocketConnection(ws, req) {
 
     currentRoom.users.forEach(user => {
       if (user.socket !== ws || !excludeSelf) {
-        user.socket.send(JSON.stringify({ type, data }));
+        try {
+          user.socket.send(JSON.stringify({ type, data }));
+        } catch (error) {
+          logger.error('Error sending message to user:', error);
+        }
       }
     });
   };
@@ -43,7 +47,7 @@ function handleWebSocketConnection(ws, req) {
 
       switch (message.type) {
         case 'join-room':
-          await handleJoinRoom(message.data, ws);
+          await handleJoinRoom(message.data);
           break;
 
         case 'create-transport':
@@ -99,8 +103,8 @@ function handleWebSocketConnection(ws, req) {
 
   // Обработка присоединения к комнате
   async function handleJoinRoom(data) {
-    const { roomId, username } = data;
-
+    const { roomId, username, sessionId } = data;
+    
     try {
       // Получаем или создаем комнату
       let room = roomService.getRoom(roomId);
@@ -114,31 +118,51 @@ function handleWebSocketConnection(ws, req) {
         return;
       }
 
-      // Создаем пользователя
-      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      currentUser = new User(userId, username, ws);
-
-      // Добавляем пользователя в комнату
-      room.addUser(currentUser);
-      currentRoom = room;
-
       // Создаем маршрутизатор если его нет
       if (!room.router) {
         room.router = await mediasoupService.createRouter();
         logger.info(`Router created for room: ${roomId}`);
       }
 
-      currentUser.rtpCapabilities = data.rtpCapabilities; // Клиент должен отправлять свои capabilities
+      // Проверяем, есть ли пользователь с таким sessionId
+      let user = room.getUserBySessionId(sessionId);
+      
+      if (user) {
+        // Обновляем существующего пользователя
+        user.socket = ws;
+        user.isConnected = true;
+        user.lastActivity = Date.now();
+        
+        // Уведомляем других участников о переподключении
+        broadcastToRoom('user-connection-status', {
+          userId: user.id,
+          isConnected: true
+        });
+      } else {
+        // Создаем нового пользователя
+        const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        user = new User(userId, username, ws, sessionId);
+        room.addUser(user);
+        
+        // Уведомляем других участников о новом пользователе
+        broadcastToRoom('user-joined', {
+          user: user.toJSON()
+        });
+      }
+
+      currentUser = user;
+      currentRoom = room;
 
       // Отправляем подтверждение присоединения
       sendToClient('joined', {
         roomId,
-        users: room.getUsersList()
+        users: room.getUsersList(),
+        sessionId: user.sessionId
       });
 
-      // Уведомляем других участников
-      broadcastToRoom('user-joined', {
-        user: username
+      // Обновляем список пользователей у всех участников
+      broadcastToRoom('users-updated', {
+        users: room.getUsersList()
       });
 
       logger.info(`User ${username} joined room ${roomId}`);
@@ -288,7 +312,7 @@ function handleWebSocketConnection(ws, req) {
       // Проверяем возможность потребления
       if (!currentRoom.router.canConsume({
         producerId,
-        rtpCapabilities: currentUser.rtpCapabilities // Нужно где-то хранить rtpCapabilities пользователя
+        rtpCapabilities: currentUser.rtpCapabilities
       })) {
         sendError('Cannot consume this producer');
         return;
@@ -356,7 +380,7 @@ function handleWebSocketConnection(ws, req) {
     }
 
     const { text } = data;
-
+    
     // Пересылаем сообщение всем участникам комнаты
     broadcastToRoom('chat-message', {
       from: currentUser.username,
@@ -368,6 +392,16 @@ function handleWebSocketConnection(ws, req) {
   // Обработка отключения пользователя
   function handleUserDisconnect() {
     if (!currentRoom || !currentUser) return;
+
+    // Обновляем статус подключения пользователя
+    currentUser.isConnected = false;
+    currentUser.lastDisconnected = Date.now();
+    
+    // Уведомляем других участников об отключении
+    broadcastToRoom('user-connection-status', {
+      userId: currentUser.id,
+      isConnected: false
+    });
 
     // Удаляем пользователя из комнаты
     currentRoom.removeUser(currentUser.id);
@@ -387,9 +421,15 @@ function handleWebSocketConnection(ws, req) {
       consumer.close();
     });
 
-    // Уведомляем других участников
+    // Уведомляем других участников о выходе пользователя
     broadcastToRoom('user-left', {
-      user: currentUser.username
+      userId: currentUser.id,
+      username: currentUser.username
+    });
+
+    // Обновляем список пользователей у всех участников
+    broadcastToRoom('users-updated', {
+      users: currentRoom.getUsersList()
     });
 
     logger.info(`User ${currentUser.username} left room ${currentRoom.id}`);
@@ -397,6 +437,7 @@ function handleWebSocketConnection(ws, req) {
     // Если комната пуста, удаляем ее
     if (currentRoom.isEmpty()) {
       roomService.deleteRoom(currentRoom.id);
+      logger.info(`Room ${currentRoom.id} deleted (empty)`);
     }
 
     // Сбрасываем текущие ссылки

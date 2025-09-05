@@ -1,15 +1,17 @@
 // models/User.js
 class User {
-  constructor(id, username, socket) {
+  constructor(id, username, socket, sessionId) {
     this.id = id;
     this.username = username;
     this.socket = socket;
+    this.sessionId = sessionId; // Добавляем sessionId
     this.joinedAt = new Date();
+    this.lastActivity = Date.now();
+    this.isConnected = true;
+    this.lastDisconnected = null;
     this.transports = new Map();
     this.producers = new Map();
     this.consumers = new Map();
-    this.rtpCapabilities = null;
-    this.lastActivity = Date.now();
   }
 
   updateActivity() {
@@ -19,8 +21,11 @@ class User {
   toJSON() {
     return {
       id: this.id,
+      id: this.id,
       username: this.username,
-      joinedAt: this.joinedAt
+      sessionId: this.sessionId,
+      joinedAt: this.joinedAt,
+      isConnected: this.isConnected
     };
   }
 }

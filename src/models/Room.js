@@ -17,7 +17,7 @@ class Room {
     if (this.users.size >= this.maxUsers) {
       throw new Error('Room is full');
     }
-    
+
     this.users.set(user.id, user);
     return true;
   }
@@ -30,8 +30,23 @@ class Room {
     return this.users.get(userId);
   }
 
+  getUserBySessionId(sessionId) {
+    for (const user of this.users.values()) {
+      if (user.sessionId === sessionId) {
+        return user;
+      }
+    }
+    return null;
+  }
+
   getUsersList() {
-    return Array.from(this.users.values()).map(user => user.toJSON());
+    return Array.from(this.users.values()).map(user => ({
+      id: user.id,
+      username: user.username,
+      sessionId: user.sessionId,
+      joinedAt: user.joinedAt.toISOString(),
+      isConnected: user.isConnected
+    }));
   }
 
   isEmpty() {
