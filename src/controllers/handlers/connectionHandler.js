@@ -1,4 +1,3 @@
-// handlers/connectionHandler.js
 const logger = require('../../utils/logger');
 const validators = require('../validators');
 
@@ -31,16 +30,17 @@ function createHandlerContext(ws) {
     });
   };
 
-    const waitForJoin = () => {
-    return new Promise((resolve) => {
-      const checkInterval = setInterval(() => {
-        if (currentUser && currentRoom) {
-          clearInterval(checkInterval);
-          resolve();
-        }
-      }, 10); // Проверяем каждые 10 мс
-    });
-  };
+  // Удаляем waitForJoin - он создает deadlock
+  // const waitForJoin = () => {
+  //   return new Promise((resolve) => {
+  //     const checkInterval = setInterval(() => {
+  //       if (currentUser && currentRoom) {
+  //         clearInterval(checkInterval);
+  //         resolve();
+  //       }
+  //     }, 10);
+  //   });
+  // };
 
   return {
     ws,
@@ -51,7 +51,6 @@ function createHandlerContext(ws) {
     sendError,
     sendToClient,
     broadcastToRoom,
-    waitForJoin, // ✅ Добавлено
     validators
   };
 }

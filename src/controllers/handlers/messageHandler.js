@@ -1,4 +1,3 @@
-// handlers/messageHandler.js
 const roomHandler = require('./roomHandler');
 const transportHandler = require('./transportHandler');
 const mediaHandler = require('./mediaHandler');
@@ -7,7 +6,6 @@ const { validateMessage } = require('./connectionHandler');
 const logger = require('../../utils/logger');
 
 function setupMessageHandlers(context) {
-  // Проверяем, что context и context.ws существуют
   if (!context || !context.ws) {
     logger.error('Invalid context or WebSocket in setupMessageHandlers');
     return;
@@ -18,9 +16,13 @@ function setupMessageHandlers(context) {
   ws.on('message', async (data) => {
     try {
       const message = JSON.parse(data);
-      logger.info(`Received message type: ${message.type} from user: ${context.currentUser?.username || 'unknown'} with sessionId: ${message.data.sessionId}`);
       
-      // Валидация сообщения
+      // Логируем sessionId из данных сообщения, а не из контекста
+      const sessionId = message.data?.sessionId || 'undefined';
+      const username = context.currentUser?.username || 'unknown';
+      
+      logger.info(`Received message type: ${message.type} from user: ${username} with sessionId: ${sessionId}`);
+      
       let validatedData;
       try {
         validatedData = validateMessage(message, context);
@@ -29,7 +31,6 @@ function setupMessageHandlers(context) {
         return;
       }
 
-      // Маршрутизация сообщений
       switch (message.type) {
         case 'join-room':
           await roomHandler.handleJoinRoom(validatedData, context);

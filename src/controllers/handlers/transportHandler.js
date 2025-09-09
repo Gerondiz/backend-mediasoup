@@ -2,24 +2,18 @@ const logger = require('../../utils/logger');
 
 async function handleCreateTransport(data, context) {
   const { direction } = data;
-  const { currentRoom, currentUser, sendError, sendToClient, waitForJoin } = context;
+  const { currentRoom, currentUser, sendError, sendToClient } = context;
 
-  logger.info('🔧 Init transport create:', data);
+  logger.info('🔧 Init transport create:', { direction, username: currentUser?.username });
 
-  // ✅ Ждём, пока пользователь присоединится к комнате
-  if (!currentRoom || !currentUser) {
-    logger.info('⏳ Waiting for user to join room...');
-    await waitForJoin();
-    logger.info('✅ User joined, proceeding with transport creation');
-  }
-
+  // Проверяем, что пользователь присоединен к комнате
   if (!currentRoom || !currentUser) {
     logger.info('🔧 Not joined to any room');
     sendError('Not joined to any room');
     return;
   }
 
-  logger.info('🔧 Creating transport for direction:', data.direction);
+  logger.info('🔧 Creating transport for direction:', direction, 'for user:', currentUser.username);
 
   try {
     const transport = await currentRoom.router.createWebRtcTransport(
@@ -32,7 +26,7 @@ async function handleCreateTransport(data, context) {
 
     // Настройка обработчиков событий транспорта
     transport.on('dtlsstatechange', (dtlsState) => {
-      logger.debug(`Transport DTLS state changed to: ${dtlsState}`);
+      logger.debug(`Transport DTLS state changed to: ${dtlsState} for user: ${currentUser.username}`);
       if (dtlsState === 'closed' || dtlsState === 'failed') {
         transport.close();
       }
@@ -61,8 +55,8 @@ async function handleCreateTransport(data, context) {
 async function handleConnectTransport(data, context) {
   const { transportId, dtlsParameters } = data;
   const { currentRoom, currentUser, sendError, sendToClient } = context;
-
-  logger.info('🔗 Connecting transport:', data.transportId);
+  
+  logger.info('🔗 Connecting transport:', transportId, 'for user:', currentUser?.username);
   
   if (!currentRoom || !currentUser) {
     sendError('Not joined to any room');
@@ -79,6 +73,7 @@ async function handleConnectTransport(data, context) {
 
     await transport.connect({ dtlsParameters });
     sendToClient('transport-connected', { transportId });
+    logger.info('✅ Transport connected successfully for user:', currentUser.username);
   } catch (error) {
     logger.error('Error connecting transport:', error);
     sendError('Failed to connect transport');

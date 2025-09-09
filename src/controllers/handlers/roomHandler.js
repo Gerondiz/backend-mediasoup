@@ -1,4 +1,3 @@
-// handlers/roomHandler.js
 const roomService = require('../../services/roomService');
 const mediasoupService = require('../../services/mediasoupService');
 const User = require('../../models/User');
@@ -7,6 +6,7 @@ const logger = require('../../utils/logger');
 async function handleJoinRoom(data, context) {
   const { roomId, username, sessionId } = data;
   const { sendError, sendToClient, broadcastToRoom } = context;
+  
   try {
     let room = roomService.getRoom(roomId);
     if (!room) {
@@ -27,20 +27,33 @@ async function handleJoinRoom(data, context) {
 
     let user = room.getUserBySessionId(sessionId);
 
+    // Устанавливаем контекст ДО любой отправки сообщений
     if (user) {
+      // Обновляем существующего пользователя
       user.socket = context.ws;
       user.isConnected = true;
       user.lastActivity = Date.now();
-
+      
+      // Устанавливаем контекст
+      context.currentUser = user;
+      context.currentRoom = room;
+      
+      // Уведомляем других участников
       broadcastToRoom('user-connection-status', {
         userId: user.id,
         isConnected: true
       });
     } else {
+      // Создаем нового пользователя
       const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       user = new User(userId, username, context.ws, sessionId);
       room.addUser(user);
-
+      
+      // Устанавливаем контекст ПЕРЕД отправкой любых сообщений
+      context.currentUser = user;
+      context.currentRoom = room;
+      
+      // Уведомляем других участников о новом пользователе
       broadcastToRoom('user-joined', {
         user: user.toJSON()
       });
@@ -54,9 +67,7 @@ async function handleJoinRoom(data, context) {
       currentRoom: context.currentRoom?.id,
     });
 
-    context.currentUser = user;
-    context.currentRoom = room;
-
+    // Теперь отправляем joined текущему пользователю
     sendToClient('joined', {
       roomId,
       users: room.getUsersList(),
@@ -64,9 +75,10 @@ async function handleJoinRoom(data, context) {
       rtpCapabilities,
     });
 
+    // Обновляем список пользователей у всех участников
     broadcastToRoom('users-updated', {
       users: room.getUsersList()
-    }, 10);
+    });
 
     logger.info(`User ${username} joined room ${roomId}`);
   } catch (error) {
@@ -75,7 +87,6 @@ async function handleJoinRoom(data, context) {
   }
 }
 
-// ✅ Добавь эти функции (если их нет)
 function handleLeaveRoom(context) {
   const { currentUser, currentRoom } = context;
 
@@ -132,7 +143,6 @@ function handleUserDisconnect(context) {
   context.currentRoom = null;
 }
 
-// ✅ Экспорт ВСЕХ функций
 module.exports = {
   handleJoinRoom,
   handleLeaveRoom,
