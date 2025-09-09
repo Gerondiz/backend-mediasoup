@@ -1,16 +1,9 @@
 const logger = require('../../utils/logger');
 
+// handlers/mediaHandler.js
 async function handleProduce(data, context) {
   const { transportId, kind, rtpParameters } = data;
   const { currentRoom, currentUser, sendError, sendToClient, broadcastToRoom } = context;
-
-  logger.info('🎤 Producer created:', producer.id, 'for user:', currentUser.id);
-
-  if (!currentRoom || !currentUser) {
-    logger.info('⏳ Waiting for user to join room...');
-    await waitForJoin();
-    logger.info('✅ User joined, proceeding with produce');
-  }
 
   if (!currentRoom || !currentUser) {
     sendError('Not joined to any room');
@@ -25,11 +18,15 @@ async function handleProduce(data, context) {
       return;
     }
 
+    // ✅ Создаем producer ДО логирования
     const producer = await transport.produce({
       kind,
       rtpParameters,
       appData: { userId: currentUser.id }
     });
+
+    // ✅ Теперь логируем
+    logger.info('🎤 Producer created:', producer.id, 'for user:', currentUser.id);
 
     // Сохраняем производителя
     currentRoom.producers.set(producer.id, producer);
@@ -121,11 +118,13 @@ async function handleConsume(data, context) {
 
 async function handleGetProducers(context) {
   const { currentRoom, currentUser, sendError, sendToClient } = context;
-
+  
   if (!currentRoom) {
     sendError('Not joined to any room');
     return;
   }
+
+  logger.info('📋 Sending producers list to user:', currentUser?.username); // ✅ Добавь лог
 
   const producersList = Array.from(currentRoom.producers.entries())
     .map(([id, producer]) => ({

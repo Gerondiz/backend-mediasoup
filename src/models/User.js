@@ -1,6 +1,6 @@
 // models/User.js
 class User {
-  constructor(id, username, socket, sessionId) {
+  constructor(id, username, socket, sessionId, rtpCapabilities = null) {
     this.id = id;
     this.username = username;
     this.socket = socket;
@@ -12,6 +12,7 @@ class User {
     this.transports = new Map();
     this.producers = new Map();
     this.consumers = new Map();
+    this.rtpCapabilities = rtpCapabilities;
   }
 
   updateActivity() {

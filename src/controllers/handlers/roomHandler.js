@@ -6,7 +6,7 @@ const logger = require('../../utils/logger');
 async function handleJoinRoom(data, context) {
   const { roomId, username, sessionId } = data;
   const { sendError, sendToClient, broadcastToRoom } = context;
-  
+
   try {
     let room = roomService.getRoom(roomId);
     if (!room) {
@@ -33,11 +33,11 @@ async function handleJoinRoom(data, context) {
       user.socket = context.ws;
       user.isConnected = true;
       user.lastActivity = Date.now();
-      
+
       // Устанавливаем контекст
       context.currentUser = user;
       context.currentRoom = room;
-      
+
       // Уведомляем других участников
       broadcastToRoom('user-connection-status', {
         userId: user.id,
@@ -46,13 +46,15 @@ async function handleJoinRoom(data, context) {
     } else {
       // Создаем нового пользователя
       const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      user = new User(userId, username, context.ws, sessionId);
+      user = new User(userId, username, context.ws, sessionId, rtpCapabilities);
       room.addUser(user);
-      
+
+      user.rtpCapabilities = rtpCapabilities;
+
       // Устанавливаем контекст ПЕРЕД отправкой любых сообщений
       context.currentUser = user;
       context.currentRoom = room;
-      
+
       // Уведомляем других участников о новом пользователе
       broadcastToRoom('user-joined', {
         user: user.toJSON()

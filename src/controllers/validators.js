@@ -32,12 +32,23 @@ const validators = {
     if (!data || typeof data !== 'object') throw new Error('Invalid data format');
     if (typeof data.transportId !== 'string' || !data.transportId) throw new Error('Transport ID is required');
     if (data.kind !== 'audio' && data.kind !== 'video') throw new Error('Kind must be audio or video');
+
+    // ✅ Валидация rtpParameters
     if (!data.rtpParameters || typeof data.rtpParameters !== 'object') throw new Error('RTP parameters are required');
+    if (!data.rtpParameters.codecs || !Array.isArray(data.rtpParameters.codecs)) throw new Error('RTP parameters must include codecs array');
+    if (!data.rtpParameters.encodings || !Array.isArray(data.rtpParameters.encodings)) throw new Error('RTP parameters must include encodings array');
+
     return {
       transportId: data.transportId,
       kind: data.kind,
       rtpParameters: data.rtpParameters
     };
+  },
+
+  'get-producers': (data) => {
+    // get-producers не требует данных, но должен быть объектом
+    if (data && typeof data !== 'object') throw new Error('Invalid data format');
+    return {}; // Возвращаем пустой объект
   },
 
   'consume': (data) => {

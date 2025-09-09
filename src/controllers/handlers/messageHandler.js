@@ -10,19 +10,19 @@ function setupMessageHandlers(context) {
     logger.error('Invalid context or WebSocket in setupMessageHandlers');
     return;
   }
-  
+
   const { ws } = context;
-  
+
   ws.on('message', async (data) => {
     try {
       const message = JSON.parse(data);
-      
+
       // Логируем sessionId из данных сообщения, а не из контекста
       const sessionId = message.data?.sessionId || 'undefined';
       const username = context.currentUser?.username || 'unknown';
-      
+
       logger.info(`Received message type: ${message.type} from user: ${username} with sessionId: ${sessionId}`);
-      
+
       let validatedData;
       try {
         validatedData = validateMessage(message, context);
