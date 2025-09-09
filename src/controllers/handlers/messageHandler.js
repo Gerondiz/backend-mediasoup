@@ -18,7 +18,7 @@ function setupMessageHandlers(context) {
   ws.on('message', async (data) => {
     try {
       const message = JSON.parse(data);
-      logger.debug(`Received message type: ${message.type}`);
+      logger.info(`Received message type: ${message.type} from user: ${context.currentUser?.username || 'unknown'} with sessionId: ${message.data.sessionId}`);
       
       // Валидация сообщения
       let validatedData;

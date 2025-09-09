@@ -31,8 +31,19 @@ function createHandlerContext(ws) {
     });
   };
 
+    const waitForJoin = () => {
+    return new Promise((resolve) => {
+      const checkInterval = setInterval(() => {
+        if (currentUser && currentRoom) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 10); // Проверяем каждые 10 мс
+    });
+  };
+
   return {
-    ws, // ✅ Явно добавляем ws в контекст
+    ws,
     get currentUser() { return currentUser; },
     set currentUser(user) { currentUser = user; },
     get currentRoom() { return currentRoom; },
@@ -40,6 +51,7 @@ function createHandlerContext(ws) {
     sendError,
     sendToClient,
     broadcastToRoom,
+    waitForJoin, // ✅ Добавлено
     validators
   };
 }

@@ -21,7 +21,6 @@ class User {
   toJSON() {
     return {
       id: this.id,
-      id: this.id,
       username: this.username,
       sessionId: this.sessionId,
       joinedAt: this.joinedAt,

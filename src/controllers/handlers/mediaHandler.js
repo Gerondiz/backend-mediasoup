@@ -3,7 +3,15 @@ const logger = require('../../utils/logger');
 async function handleProduce(data, context) {
   const { transportId, kind, rtpParameters } = data;
   const { currentRoom, currentUser, sendError, sendToClient, broadcastToRoom } = context;
-  
+
+  logger.info('🎤 Producer created:', producer.id, 'for user:', currentUser.id);
+
+  if (!currentRoom || !currentUser) {
+    logger.info('⏳ Waiting for user to join room...');
+    await waitForJoin();
+    logger.info('✅ User joined, proceeding with produce');
+  }
+
   if (!currentRoom || !currentUser) {
     sendError('Not joined to any room');
     return;
@@ -55,7 +63,7 @@ async function handleProduce(data, context) {
 async function handleConsume(data, context) {
   const { transportId, producerId, rtpCapabilities } = data;
   const { currentRoom, currentUser, sendError, sendToClient } = context;
-  
+
   if (!currentRoom || !currentUser) {
     sendError('Not joined to any room');
     return;
@@ -98,6 +106,8 @@ async function handleConsume(data, context) {
       userId: producer.appData.userId
     });
 
+    logger.info('🎧 Consumer created:', consumer.id, 'for producer:', producerId);
+
     consumer.on('@close', () => {
       currentRoom.consumers.delete(consumer.id);
       currentUser.consumers.delete(consumer.id);
@@ -111,7 +121,7 @@ async function handleConsume(data, context) {
 
 async function handleGetProducers(context) {
   const { currentRoom, currentUser, sendError, sendToClient } = context;
-  
+
   if (!currentRoom) {
     sendError('Not joined to any room');
     return;

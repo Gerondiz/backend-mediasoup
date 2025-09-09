@@ -2,12 +2,24 @@ const logger = require('../../utils/logger');
 
 async function handleCreateTransport(data, context) {
   const { direction } = data;
-  const { currentRoom, currentUser, sendError, sendToClient } = context;
-  
+  const { currentRoom, currentUser, sendError, sendToClient, waitForJoin } = context;
+
+  logger.info('🔧 Init transport create:', data);
+
+  // ✅ Ждём, пока пользователь присоединится к комнате
   if (!currentRoom || !currentUser) {
+    logger.info('⏳ Waiting for user to join room...');
+    await waitForJoin();
+    logger.info('✅ User joined, proceeding with transport creation');
+  }
+
+  if (!currentRoom || !currentUser) {
+    logger.info('🔧 Not joined to any room');
     sendError('Not joined to any room');
     return;
   }
+
+  logger.info('🔧 Creating transport for direction:', data.direction);
 
   try {
     const transport = await currentRoom.router.createWebRtcTransport(
@@ -49,6 +61,8 @@ async function handleCreateTransport(data, context) {
 async function handleConnectTransport(data, context) {
   const { transportId, dtlsParameters } = data;
   const { currentRoom, currentUser, sendError, sendToClient } = context;
+
+  logger.info('🔗 Connecting transport:', data.transportId);
   
   if (!currentRoom || !currentUser) {
     sendError('Not joined to any room');
