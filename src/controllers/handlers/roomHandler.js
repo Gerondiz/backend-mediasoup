@@ -117,25 +117,38 @@ function handleUserDisconnect(context) {
     isConnected: false
   });
 
-  currentRoom.removeUser(currentUser.id);
+  // ✅ Отправляем уведомления о закрытии producer'ов ДО удаления пользователя
+  currentUser.producers.forEach(producer => {
+    // Уведомляем всех участников комнаты о закрытии producer'а
+    broadcastToRoom('producer-closed', {
+      producerId: producer.id,
+      userId: currentUser.id
+    });
+    
+    // Закрываем producer
+    producer.close();
+  });
 
+  // Закрываем transports после producer'ов
   currentUser.transports.forEach(({ transport }) => {
     transport.close();
   });
 
-  currentUser.producers.forEach(producer => {
-    producer.close();
-  });
-
+  // Очищаем consumers (они уже будут закрыты на клиенте)
   currentUser.consumers.forEach(consumer => {
     consumer.close();
   });
 
+  // Удаляем пользователя из комнаты
+  currentRoom.removeUser(currentUser.id);
+
+  // Уведомляем о выходе пользователя
   broadcastToRoom('user-left', {
     userId: currentUser.id,
     username: currentUser.username
   });
 
+  // Обновляем список пользователей
   broadcastToRoom('users-updated', {
     users: currentRoom.getUsersList()
   });
