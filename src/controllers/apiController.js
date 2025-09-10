@@ -18,7 +18,10 @@ function healthCheck(req, res) {
   res.json({
     status: 'ok',
     timestamp: Date.now(),
-    rooms: roomService.getRooms().length
+    rooms: roomService.getRooms().length,
+    maxRooms: config.room.maxRooms,
+    maxUsers: config.room.maxUsers,
+    sessionTimeout: config.room.sessionTimeout
   });
 }
 
@@ -28,11 +31,10 @@ function createRoom(req, res) {
     const { username, password } = req.body;
     const roomId = generateRoomId();
 
-    // ✅ Проверяем лимит комнат перед созданием
     if (roomService.rooms.size >= config.room.maxRooms) {
       return res.status(400).json({
         success: false,
-        message: 'Maximum number of rooms reached'
+        message: `Maximum number of rooms reached (${config.room.maxRooms} max)`
       });
     }
 
@@ -47,7 +49,7 @@ function createRoom(req, res) {
     logger.error('Create room error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create room'
+      message: error.message || 'Failed to create room'
     });
   }
 }
@@ -57,10 +59,18 @@ function joinRoom(req, res) {
   try {
     const { roomId } = req.body;
 
-    if (!roomService.canJoinRoom(roomId)) {
+    const room = roomService.getRoom(roomId);
+    if (!room) {
       return res.status(404).json({
         success: false,
-        message: 'Room not found or full'
+        message: 'Room not found'
+      });
+    }
+
+    if (room.users.size >= room.maxUsers) {
+      return res.status(400).json({
+        success: false,
+        message: `Room is full (${room.maxUsers} max users)`
       });
     }
 
