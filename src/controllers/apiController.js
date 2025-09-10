@@ -1,5 +1,6 @@
 // controllers/apiController.js
 const roomService = require('../services/roomService');
+const config = require('../config');
 const logger = require('../utils/logger');
 
 // Генерация ID комнаты
@@ -14,8 +15,8 @@ function generateRoomId() {
 
 // Проверка здоровья сервера
 function healthCheck(req, res) {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     timestamp: Date.now(),
     rooms: roomService.getRooms().length
   });
@@ -26,9 +27,17 @@ function createRoom(req, res) {
   try {
     const { username, password } = req.body;
     const roomId = generateRoomId();
-    
+
+    // ✅ Проверяем лимит комнат перед созданием
+    if (roomService.rooms.size >= config.room.maxRooms) {
+      return res.status(400).json({
+        success: false,
+        message: 'Maximum number of rooms reached'
+      });
+    }
+
     roomService.createRoom(roomId);
-    
+
     res.json({
       success: true,
       roomId: roomId,
@@ -47,14 +56,14 @@ function createRoom(req, res) {
 function joinRoom(req, res) {
   try {
     const { roomId } = req.body;
-    
+
     if (!roomService.canJoinRoom(roomId)) {
       return res.status(404).json({
         success: false,
         message: 'Room not found or full'
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Room exists, you can join via WebSocket'

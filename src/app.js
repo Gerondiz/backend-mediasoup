@@ -1,4 +1,6 @@
 //app.js
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -56,9 +58,9 @@ class App {
       const iceServers = [
         { urls: 'stun:stun.l.google.com:19302' },
         { 
-          urls: `turn:${config.mediasoup.webRtcTransport.listenIps[0].announcedIp}:3478`,
-          username: 'turnuser',
-          credential: '12345678'
+          urls: config.turn.url,
+          username: config.turn.username,
+          credential: config.turn.credential
         }
       ];
       

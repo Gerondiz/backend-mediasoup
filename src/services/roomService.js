@@ -1,6 +1,6 @@
 // services/roomService.js
-const Room = require('../models/Room');
 const RoomWithChat = require('../models/RoomWithChat');
+const config = require('../config');
 const logger = require('../utils/logger');
 
 class RoomService {
@@ -9,12 +9,18 @@ class RoomService {
     this.cleanupInterval = setInterval(() => this.cleanupRooms(), 5 * 60 * 1000);
   }
 
-  createRoom(roomId, maxUsers = 10) {
+  createRoom(roomId) {
+    // ✅ Проверяем лимит комнат
+    if (this.rooms.size >= config.room.maxRooms) {
+      throw new Error('Maximum number of rooms reached');
+    }
+
     if (this.rooms.has(roomId)) {
       throw new Error('Room already exists');
     }
 
-    const room = new RoomWithChat(roomId, maxUsers);
+    // ✅ Используем maxUsers из config
+    const room = new RoomWithChat(roomId, config.room.maxUsers);
     this.rooms.set(roomId, room);
     logger.info(`Room created: ${roomId}`);
     
@@ -37,7 +43,7 @@ class RoomService {
   }
 
   canJoinRoom(roomId) {
-    const room = this.rooms.get(roomId);
+    const room = this.getRoom(roomId);
     return room && room.users.size < room.maxUsers;
   }
 

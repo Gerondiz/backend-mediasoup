@@ -1,3 +1,4 @@
+// config/index.js
 const path = require('path');
 
 module.exports = {
@@ -6,7 +7,7 @@ module.exports = {
     port: process.env.PORT || 3001,
     allowedOrigins: process.env.ALLOWED_ORIGINS 
       ? process.env.ALLOWED_ORIGINS.split(',') 
-      : ['http://localhost:3000', 'http://20.0.0.107:3000', 'http://20.0.0.201:*'],
+      : ['http://localhost:3000', 'http://20.0.0.107:3000'],
     useHttps: process.env.USE_HTTPS === 'true' || false,
     certFile: process.env.CERT_FILE || '20.0.0.107+3.pem',
     keyFile: process.env.KEY_FILE || '20.0.0.107+3-key.pem'
@@ -16,6 +17,7 @@ module.exports = {
   },
   room: {
     maxUsers: parseInt(process.env.MAX_USERS) || 10,
+    maxRooms: parseInt(process.env.MAX_ROOMS) || 100,
     sessionTimeout: process.env.SESSION_TIMEOUT || '30m'
   },
   mediasoup: {
@@ -39,5 +41,10 @@ module.exports = {
       maxIncomingBitrate: 1500000,
       initialAvailableOutgoingBitrate: 1000000
     }
+  },
+  turn: {
+    url: process.env.TURN_URL || 'turn:20.0.0.107:3478',
+    username: process.env.TURN_USERNAME || 'turnuser',
+    credential: process.env.TURN_CREDENTIAL || '12345678'
   }
 };
