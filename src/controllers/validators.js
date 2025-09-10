@@ -67,7 +67,15 @@ const validators = {
     if (!data || typeof data !== 'object') throw new Error('Invalid data format');
     if (typeof data.text !== 'string' || !data.text.trim()) throw new Error('Message text is required');
     return { text: data.text.trim() };
-  }
+  },
+
+  'get-chat-history': (data) => {
+    // get-chat-history не требует данных, но должен быть объектом
+    if (data && typeof data !== 'object') throw new Error('Invalid data format');
+    return {}; // Возвращаем пустой объект
+  },
+
+
 };
 
 module.exports = validators;

@@ -1,5 +1,6 @@
 // services/roomService.js
 const Room = require('../models/Room');
+const RoomWithChat = require('../models/RoomWithChat');
 const logger = require('../utils/logger');
 
 class RoomService {
@@ -13,7 +14,7 @@ class RoomService {
       throw new Error('Room already exists');
     }
 
-    const room = new Room(roomId, maxUsers);
+    const room = new RoomWithChat(roomId, maxUsers);
     this.rooms.set(roomId, room);
     logger.info(`Room created: ${roomId}`);
     

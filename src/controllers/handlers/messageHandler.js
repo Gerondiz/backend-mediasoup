@@ -56,6 +56,9 @@ function setupMessageHandlers(context) {
         case 'chat-message':
           chatHandler.handleChatMessage(validatedData, context);
           break;
+        case 'get-chat-history':
+          await chatHandler.handleGetChatHistory(context);
+          break;
         default:
           logger.warn('Unknown message type:', message.type);
           context.sendError(`Unknown message type: ${message.type}`);

@@ -1,5 +1,7 @@
+// handlers/roomHandler.js
 const roomService = require('../../services/roomService');
 const mediasoupService = require('../../services/mediasoupService');
+const RoomWithChat = require('../../models/RoomWithChat');
 const User = require('../../models/User');
 const logger = require('../../utils/logger');
 
@@ -10,7 +12,10 @@ async function handleJoinRoom(data, context) {
   try {
     let room = roomService.getRoom(roomId);
     if (!room) {
-      room = roomService.createRoom(roomId);
+      // ✅ Создаем комнату с поддержкой чата
+      room = new RoomWithChat(roomId);
+      roomService.rooms.set(roomId, room); // Обновляем в roomService
+      logger.info(`Room created: ${roomId}`);
     }
 
     if (!roomService.canJoinRoom(roomId)) {
@@ -69,12 +74,13 @@ async function handleJoinRoom(data, context) {
       currentRoom: context.currentRoom?.id,
     });
 
-    // Теперь отправляем joined текущему пользователю
+    // ✅ Отправляем joined с историей чата
     sendToClient('joined', {
       roomId,
       users: room.getUsersList(),
       sessionId: user.sessionId,
       rtpCapabilities,
+      chatHistory: room.getChatHistory(), // ✅ Добавляем историю
     });
 
     // Обновляем список пользователей у всех участников
