@@ -24,6 +24,7 @@ class App {
   }
 
   setupMiddleware() {
+    logger.info(`Setting up CORS with origins:  ${config.server.allowedOrigins}`);
     this.app.use(cors({
       origin: config.server.allowedOrigins,
       credentials: true
