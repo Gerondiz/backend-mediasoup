@@ -4,7 +4,7 @@ const path = require('path');
 module.exports = {
   server: {
     host: process.env.HOST || '0.0.0.0',
-    port: process.env.PORT || 3001,
+    port: process.env.PORT ? parseInt(process.env.PORT, 10) : (process.env.PORT || 3001),
     allowedOrigins: process.env.ALLOWED_ORIGINS 
       ? process.env.ALLOWED_ORIGINS.split(',') 
       : ['http://localhost:3000', 'http://20.0.0.107:3000'],
