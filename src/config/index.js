@@ -5,8 +5,8 @@ module.exports = {
   server: {
     host: process.env.HOST || '0.0.0.0',
     port: process.env.PORT ? parseInt(process.env.PORT, 10) : (process.env.PORT || 3001),
-    allowedOrigins: process.env.ALLOWED_ORIGINS 
-      ? process.env.ALLOWED_ORIGINS.split(',') 
+    allowedOrigins: process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()) // <-- .map(origin => origin.trim())
       : ['http://localhost:3000', 'http://20.0.0.107:3000'],
     useHttps: process.env.USE_HTTPS === 'true' || false,
     certFile: process.env.CERT_FILE || '20.0.0.107+3.pem',
