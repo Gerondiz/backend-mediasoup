@@ -1,59 +1,49 @@
+# render.yaml
+
 services:
-  - type: pserv # Private Service
-    name: mediasoup-sfu # Замените на желаемое имя
-    env: node
-    plan: standard # Free план недоступен для Private Services. Нужно выбрать standard или premium. Возможно, потребуется добавить карту оплаты.
-    buildCommand: npm install
-    startCommand: npm start
-    # Указываем порты
-    ports:
-      - port: 3001 # Порт для HTTP API и WebSocket
-        protocol: TCP
-      - port: 3478 # Порт для TURN (если TURN запущен на этом же сервере, что и SFU)
-        protocol: UDP
-      - port: 3478
-        protocol: TCP
-      # Mediasoup Ports (пример для диапазона 40000-40100, уточните нужный диапазон)
-      # ВАЖНО: Render может ограничивать количество портов в одной декларации.
-      # Возможно, нужно будет объявить несколько блоков или использовать скрипт.
-      # Ниже пример для небольшого диапазона. Для 40000-49999 потребуется другой подход,
-      # возможно, просто указать минимальный и максимальный порт, если Render это поддерживает.
-      # Проверьте документацию Render на предмет ограничений.
-      - port: 40000-40100 # Пример диапазона. Уточните поддержку диапазонов.
-        protocol: TCP
-      - port: 40000-40100 # Пример диапазона. Уточните поддержку диапазонов.
-        protocol: UDP
+  - type: pserv
+    name: backend-mediasoup-sfu
+    runtime: docker
+    plan: free # или paid, в зависимости от ваших потребностей
+    # Укажите относительный путь к Dockerfile, если он не в корне репо
+    # dockerfilePath: ./backend-mediasoup/Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
+      # Добавьте другие переменные окружения, кроме секретных
+      # Секретные переменные (например, TURN_CREDENTIAL) лучше задавать в Dashboard Render
       - key: HOST
         value: 0.0.0.0
-      # PORT будет установлен Render'ом автоматически через переменную окружения,
-      # но ваш код использует фиксированный 3001. Нужно убедиться, что он использует process.env.PORT.
-      # Если Render назначит другой порт, а ваш сервер слушает 3001, соединение не установится.
-      # Лучше изменить код сервера, чтобы он слушал process.env.PORT || 3001.
-      # Для теста можно принудительно задать PORT=3001 в envVars, если сервер не может получить его из Render.
-      # Однако, Render может переопределять это. Лучший путь - использовать process.env.PORT в коде.
-      # - key: PORT
-      #   value: "3001"
-      # ANNOUNCED_IP должен быть внутренним IP адресом Private Service в сети Render
-      # или внешним IP, если вы настроили статический IP.
-      # Render может предоставить внутренний IP. Обычно это не публичный IP.
-      # Вам нужно будет использовать публичный IP или домен, предоставленный Render,
-      # для announcedIp, если клиенты подключаются снаружи.
-      # Это сложная часть. См. примечание ниже.
-      # - key: ANNOUNCED_IP
-      #   value: <ПУБЛИЧНЫЙ_IP_ИЛИ_ДОМЕН_СЕРВИСА>
-      # ALLOWED_ORIGINS нужно указать URL вашего клиента на Vercel
+      - key: PORT
+        value: 3001
+      - key: ANNOUNCED_IP
+        value: # Оставьте пустым или удалите, если автоопределение работает
       - key: ALLOWED_ORIGINS
-        value: https://webrtc-video-conference-two.vercel.app,http://localhost:3000 # Добавьте ваш Vercel URL
-      # TURN сервер: Если TURN запущен на этом же сервере, настройте его.
-      # Если TURN отдельно, то эти переменные могут быть не нужны или должны указывать на внешний TURN.
-      # - key: TURN_URL
-      #   value: turn:<ПУБЛИЧНЫЙ_IP_ИЛИ_ДОМЕН_СЕРВИСА>:3478
-      # - key: TURN_USERNAME
-      #   value: turnuser
-      # - key: TURN_CREDENTIAL
-      #   value: 12345678
-      # Добавьте другие необходимые переменные окружения из вашего .env файла,
-      # особенно если TURN/STUN настроен отдельно.
+        value: https://webrtc-video-conference-two.vercel.app,http://localhost:3000
+      # - key: CERT_FILE # Не нужны для Services, Render терминирует TLS
+      #   value: ...
+      # - key: KEY_FILE  # Не нужны для Services, Render терминирует TLS
+      #   value: ...
+      - key: LOG_LEVEL
+        value: info
+      - key: MAX_USERS
+        value: 8
+      - key: MAX_ROOMS
+        value: 2
+      - key: SESSION_TIMEOUT
+        value: 30m
+      - key: MEDIASOUP_WORKERS
+        value: 2 # Подберите под мощность вашего плана
+      # Убедитесь, что диапазон портов соответствует конфигурации mediasoup
+      # и вашему Dockerfile EXPOSE (если указали)
+    # --- Ключевая часть: открытие портов ---
+    # Открываем порт для WebSocket/Sigaling
+    - port: 3001
+      # protocol: http # или https если ваше приложение терминирует TLS (обычно нет)
+    # Открываем диапазон портов UDP для WebRTC
+    - port: 40000-49999
+      protocol: udp
+    # Открываем диапазон портов TCP для WebRTC (если используете TCP)
+    - port: 40000-49999
+      protocol: tcp
+    # --- Конец открытия портов ---
