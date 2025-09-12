@@ -2,7 +2,6 @@
 const logger = require('./utils/logger');
 const { getExternalIP } = require('./utils/network');
 
-// --- Перемещаем логику определения IP сюда, до импорта App ---
 async function setupEnvironment() {
   if (!process.env.ANNOUNCED_IP) {
     logger.info('🔍 ANNOUNCED_IP not set in environment, attempting to auto-detect...');
@@ -10,22 +9,31 @@ async function setupEnvironment() {
       const externalIP = await getExternalIP();
       process.env.ANNOUNCED_IP = externalIP;
       logger.info(`🌐 Auto-detected and set ANNOUNCED_IP to: ${externalIP}`);
+      
+      // --- ВАЖНО: Обновляем конфигурацию mediasoup ---
+      const config = require('./config');
+      // Обновляем объект напрямую
+      config.mediasoup.webRtcTransport.listenIps[0].announcedIp = externalIP;
+      logger.info(`🔧 Updated mediasoup webRtcTransport announcedIp to: ${externalIP}`);
+      
     } catch (ipError) {
       logger.error('❌ Failed to auto-detect external IP:', ipError.message);
       logger.warn('⚠️ Server may not work correctly for WebRTC. Please set ANNOUNCED_IP manually.');
-      // process.exit(1); // Опционально: остановить запуск при ошибке
     }
   } else {
     logger.info(`🌐 Using ANNOUNCED_IP from environment: ${process.env.ANNOUNCED_IP}`);
+    // --- Обновляем конфигурацию, если IP задан в env ---
+    const config = require('./config');
+    config.mediasoup.webRtcTransport.listenIps[0].announcedIp = process.env.ANNOUNCED_IP;
+    logger.info(`🔧 Updated mediasoup webRtcTransport announcedIp from env to: ${process.env.ANNOUNCED_IP}`);
   }
 }
 
-// --- Импортируем App только после установки env ---
 async function startServer() {
   try {
-    await setupEnvironment(); // <-- Сначала настраиваем окружение
+    await setupEnvironment();
 
-    // Теперь безопасно импортируем App и другие модули, зависящие от конфигурации
+    // Теперь безопасно импортируем App
     const App = require('./app');
 
     const app = new App();

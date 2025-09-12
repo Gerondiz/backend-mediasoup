@@ -32,7 +32,7 @@ module.exports = {
       listenIps: [
         {
           ip: '0.0.0.0',
-          announcedIp: process.env.ANNOUNCED_IP || '20.0.0.107'
+          // announcedIp: process.env.ANNOUNCED_IP || '20.0.0.107'
         }
       ],
       enableUdp: true,
