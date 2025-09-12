@@ -38,6 +38,16 @@ async function handleCreateTransport(data, context) {
       currentUser.transports.delete(transport.id);
     });
 
+    logger.info('🔧 Transport created successfully:', {
+      id: transport.id,
+      direction,
+      // Логируем, что iceServers действительно переданы и используются
+      iceCandidates: transport.iceCandidates,
+      iceParameters: transport.iceParameters,
+      // Логируем опции, с которыми был создан транспорт
+      transportOptions: require('../../services/mediasoupService').getWebRtcTransportOptions()
+    });
+
     // Отправляем информацию о транспорте клиенту
     sendToClient('webRtcTransportCreated', {
       transportId: transport.id,
@@ -56,9 +66,9 @@ async function handleCreateTransport(data, context) {
 async function handleConnectTransport(data, context) {
   const { transportId, dtlsParameters } = data;
   const { currentRoom, currentUser, sendError, sendToClient } = context;
-  
+
   logger.info('🔗 Connecting transport:', transportId, 'for user:', currentUser?.username);
-  
+
   if (!currentRoom || !currentUser) {
     sendError('Not joined to any room');
     return;
