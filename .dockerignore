@@ -1,0 +1,14 @@
+# backend-mediasoup/.dockerignore
+
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env # Удалите эту строку, если хотите включить .env в образ
+.nyc_output
+coverage
+.nyc_output
+.coverage
+.vscode
+.DS_Store
