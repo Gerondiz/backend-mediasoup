@@ -90,6 +90,7 @@ class App {
       this.server.listen(config.server.port, config.server.host, () => {
         logger.info(`Server running on ${config.server.host}:${config.server.port}`);
         logger.info(`Health check available at http://${config.server.host}:${config.server.port}/api/health`);
+        logger.info(`IP check endpoint available at http://${config.server.host}:${config.server.port}/my-ip`);
       });
     } catch (error) {
       logger.error('Failed to start server:', error);
