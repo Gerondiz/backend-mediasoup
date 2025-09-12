@@ -1,3 +1,4 @@
+// handlers/connectionHandler.js
 const logger = require('../../utils/logger');
 const validators = require('../validators');
 
@@ -29,18 +30,6 @@ function createHandlerContext(ws) {
       }
     });
   };
-
-  // Удаляем waitForJoin - он создает deadlock
-  // const waitForJoin = () => {
-  //   return new Promise((resolve) => {
-  //     const checkInterval = setInterval(() => {
-  //       if (currentUser && currentRoom) {
-  //         clearInterval(checkInterval);
-  //         resolve();
-  //       }
-  //     }, 10);
-  //   });
-  // };
 
   return {
     ws,

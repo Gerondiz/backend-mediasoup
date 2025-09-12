@@ -17,7 +17,7 @@ class App {
     this.app = express();
     this.server = http.createServer(this.app);
     this.wss = new WebSocket.Server({ server: this.server });
-    
+
     this.setupMiddleware();
     this.setupRoutes();
     this.setupWebSocket();
@@ -37,13 +37,13 @@ class App {
     this.app.get('/api/health', apiController.healthCheck);
     this.app.post('/api/create-room', apiController.createRoom);
     this.app.post('/api/join-room', apiController.joinRoom);
-    
+
     // Mediasoup маршруты
     this.app.get('/router-capabilities', async (req, res) => {
       try {
         const roomId = req.query.roomId;
         const room = roomService.getRoom(roomId);
-        
+
         if (!room || !room.router) {
           return res.status(404).json({ error: 'Room not found' });
         }
@@ -56,15 +56,23 @@ class App {
     });
 
     this.app.get('/ice-servers', (req, res) => {
-      const iceServers = [
+      // const iceServers = [
+      //   { urls: 'stun:stun.l.google.com:19302' },
+      //   { 
+      //     urls: config.turn.url,
+      //     username: config.turn.username,
+      //     credential: config.turn.credential
+      //   }
+      // ];
+      const iceServers = config.turn.servers || [
         { urls: 'stun:stun.l.google.com:19302' },
-        { 
+        {
           urls: config.turn.url,
           username: config.turn.username,
           credential: config.turn.credential
         }
       ];
-      
+
       res.json(iceServers);
     });
   }
@@ -77,7 +85,7 @@ class App {
     try {
       // Инициализируем Mediasoup
       await mediasoupService.initialize();
-      
+
       // Запускаем сервер
       this.server.listen(config.server.port, config.server.host, () => {
         logger.info(`Server running on ${config.server.host}:${config.server.port}`);

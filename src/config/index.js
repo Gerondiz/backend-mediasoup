@@ -7,7 +7,7 @@ module.exports = {
     port: process.env.PORT ? parseInt(process.env.PORT, 10) : (process.env.PORT || 3001),
     allowedOrigins: process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()) // <-- .map(origin => origin.trim())
-      : ['http://localhost:3000', 'http://20.0.0.107:3000'],
+      : ['https://webrtc-video-conference-two.vercel.app', 'http://20.0.0.107:3000'],
     useHttps: process.env.USE_HTTPS === 'true' || false,
     certFile: process.env.CERT_FILE || '20.0.0.107+3.pem',
     keyFile: process.env.KEY_FILE || '20.0.0.107+3-key.pem'
@@ -43,8 +43,34 @@ module.exports = {
     }
   },
   turn: {
-    url: process.env.TURN_URL || 'turn:20.0.0.107:3478',
-    username: process.env.TURN_USERNAME || 'turnuser',
-    credential: process.env.TURN_CREDENTIAL || '12345678'
+    // url: process.env.TURN_URL || 'turn:20.0.0.107:3478',
+    // username: process.env.TURN_USERNAME || 'turnuser',
+    // credential: process.env.TURN_CREDENTIAL || '12345678'
+    servers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      {
+        urls: "stun:stun.relay.metered.ca:80",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80",
+        username: "62ebcffbcf6c87c9ed6ce75c",
+        credential: "6QxuV6wxCX5bEgL6",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80?transport=tcp",
+        username: "62ebcffbcf6c87c9ed6ce75c",
+        credential: "6QxuV6wxCX5bEgL6",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:443",
+        username: "62ebcffbcf6c87c9ed6ce75c",
+        credential: "6QxuV6wxCX5bEgL6",
+      },
+      {
+        urls: "turns:global.relay.metered.ca:443?transport=tcp",
+        username: "62ebcffbcf6c87c9ed6ce75c",
+        credential: "6QxuV6wxCX5bEgL6",
+      },
+    ],
   }
 };

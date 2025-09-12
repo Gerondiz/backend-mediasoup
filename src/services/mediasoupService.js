@@ -7,6 +7,8 @@ class MediasoupService {
   constructor() {
     this.workers = [];
     this.nextWorkerIndex = 0;
+    // Добавляем ссылку на ICE сервера из основной конфигурации
+    this.iceServers = require('../config').turn.servers;
   }
 
   async initialize() {
@@ -40,8 +42,12 @@ class MediasoupService {
     return worker.createRouter({ mediaCodecs });
   }
 
+  // ИСПРАВЛЕНИЕ: Добавляем iceServers в опции транспорта
   getWebRtcTransportOptions() {
-    return config.webRtcTransport;
+    return {
+      ...config.webRtcTransport,
+      iceServers: this.iceServers // Добавляем ICE сервера от Metered
+    };
   }
 }
 
