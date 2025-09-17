@@ -1,4 +1,5 @@
 // server.js
+require('dotenv').config();
 const logger = require('./utils/logger');
 const { getExternalIP } = require('./utils/network');
 

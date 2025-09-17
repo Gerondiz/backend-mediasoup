@@ -12,3 +12,4 @@ coverage
 .coverage
 .vscode
 .DS_Store
+.*.pem

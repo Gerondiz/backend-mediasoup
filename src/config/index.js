@@ -9,8 +9,8 @@ module.exports = {
       ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()) // <-- .map(origin => origin.trim())
       : ['https://webrtc-video-conference-two.vercel.app', 'http://20.0.0.107:3000'],
     useHttps: process.env.USE_HTTPS === 'true' || false,
-    certFile: process.env.CERT_FILE || '20.0.0.107+3.pem',
-    keyFile: process.env.KEY_FILE || '20.0.0.107+3-key.pem'
+    certFile: process.env.CERT_FILE || 'cert.pem',
+    keyFile: process.env.KEY_FILE || 'key.pem'
   },
   logging: {
     level: process.env.LOG_LEVEL || 'info'
@@ -32,7 +32,7 @@ module.exports = {
       listenIps: [
         {
           ip: '0.0.0.0',
-          // announcedIp: process.env.ANNOUNCED_IP || '20.0.0.107'
+          announcedIp: process.env.ANNOUNCED_IP || '20.0.0.107'
         }
       ],
       enableUdp: true,
