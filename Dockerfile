@@ -1,35 +1,17 @@
-# backend-mediasoup/Dockerfile
+FROM node:20-alpine
 
-# Используем официальный Node.js образ как базовый
-FROM node:18-alpine
+RUN apk add --no-cache python3 py3-pip make g++ git cmake linux-headers
 
-# Устанавливаем зависимости для сборки нативных модулей (если потребуются)
-# и утилиты для отладки (можно убрать в production)
-RUN apk add --no-cache python3 make g++
-
-# Создаем рабочую директорию внутри контейнера
 WORKDIR /app
 
-# Копируем package*.json файлы
 COPY package*.json ./
 
-# Устанавливаем зависимости Node.js
-RUN npm ci --only=production
+RUN npm ci
 
-# Копируем остальные файлы приложения
-# Используйте .dockerignore для исключения ненужных файлов (например, node_modules, .git, .env если не хотите включать)
 COPY . .
 
-# Убедитесь, что порт, который слушает ваше приложение (sigaling/websocket),
-# и диапазон портов mediasoup доступны
-# В вашем случае это, например, порт 3001 и диапазон 40000-49999
-# EXPOSE указывает Docker, какие порты приложение *потенциально* будет использовать,
-# но это не открывает их на хосте. Открытие будет в render.yaml.
 EXPOSE 3001
-# EXPOSE 40000-49999/udp
-# EXPOSE 40000-49999/tcp
-# Лучше указать конкретные диапазоны в render.yaml
+EXPOSE 40000-49999/udp
+EXPOSE 40000-49999/tcp
 
-# Команда для запуска приложения
-# Убедитесь, что в package.json скрипт "start" запускает ваш server.js
 CMD ["npm", "start"]
