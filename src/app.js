@@ -59,8 +59,10 @@ class App {
     });
 
     this.app.get('/ice-servers', (req, res) => {
-      const iceServers = config.turn.servers || [
-        { urls: 'stun:stun.l.google.com:19302' }
+      // Объединяем STUN и TURN серверы из конфигурации
+      const iceServers = [
+        ...(config.turn.stunServers || []),
+        ...(config.turn.turnServers || [])
       ];
 
       res.json(iceServers);
@@ -70,8 +72,8 @@ class App {
   setupWebSocket() {
     // Проверяем, существует ли this.server перед использованием
     if (!this.server) {
-       logger.error('Cannot setup WebSocket: Server not initialized');
-       return;
+      logger.error('Cannot setup WebSocket: Server not initialized');
+      return;
     }
     logger.info('Setting up WebSocket server on HTTP/HTTPS server instance');
     this.wss = new WebSocket.Server({ server: this.server });
@@ -101,11 +103,11 @@ class App {
           protocol = 'https';
           logger.info(`HTTPS enabled. Using key: ${keyPath}, cert: ${certPath}`);
         } catch (sslError) {
-           logger.error('Failed to read SSL certificate/key files:', sslError.message);
-           logger.warn('Falling back to HTTP.');
-           serverModule = http;
-           protocol = 'http';
-           // Не устанавливаем serverOptions для HTTPS
+          logger.error('Failed to read SSL certificate/key files:', sslError.message);
+          logger.warn('Falling back to HTTP.');
+          serverModule = http;
+          protocol = 'http';
+          // Не устанавливаем serverOptions для HTTPS
         }
       }
 
