@@ -105,9 +105,18 @@ function handleLeaveRoom(context) {
 }
 
 function handleUserDisconnect(context) {
-  const { currentUser, currentRoom, broadcastToRoom } = context;
+  const { currentUser, currentRoom, broadcastToRoom, pingInterval } = context; // Добавили pingInterval
 
   if (!currentRoom || !currentUser) return;
+
+  // --- Добавлено для Heartbeat ---
+  // Очищаем интервал пингов при отключении пользователя
+  if (pingInterval) {
+    clearInterval(pingInterval);
+    logger.debug(`Cleared ping interval for user: ${currentUser.username}`);
+    context.pingInterval = null; // Очищаем ссылку в контексте
+  }
+  // --- Конец Heartbeat ---
 
   currentUser.isConnected = false;
   currentUser.lastDisconnected = Date.now();
@@ -117,51 +126,35 @@ function handleUserDisconnect(context) {
     isConnected: false
   });
 
-  // ✅ Отправляем уведомления о закрытии producer'ов ДО удаления пользователя
+  // Отправляем уведомления о закрытии producer'ов ДО удаления пользователя
   currentUser.producers.forEach(producer => {
-    // Уведомляем всех участников комнаты о закрытии producer'а
     broadcastToRoom('producer-closed', {
       producerId: producer.id,
-      userId: currentUser.id
+      userId: currentUser.id,
+      username: currentUser.username
     });
-    
-    // Закрываем producer
-    producer.close();
-  });
-
-  // Закрываем transports после producer'ов
-  currentUser.transports.forEach(({ transport }) => {
-    transport.close();
-  });
-
-  // Очищаем consumers (они уже будут закрыты на клиенте)
-  currentUser.consumers.forEach(consumer => {
-    consumer.close();
   });
 
   // Удаляем пользователя из комнаты
   currentRoom.removeUser(currentUser.id);
 
-  // Уведомляем о выходе пользователя
-  broadcastToRoom('user-left', {
-    userId: currentUser.id,
-    username: currentUser.username
-  });
-
   // Обновляем список пользователей
-  broadcastToRoom('users-updated', {
-    users: currentRoom.getUsersList()
-  });
+  broadcastToRoom('users-updated', { users: currentRoom.getUsersList() });
 
   logger.info(`User ${currentUser.username} left room ${currentRoom.id}`);
 
   if (currentRoom.isEmpty()) {
+    // Предполагается, что roomService импортирован или доступен
+    // Если нет, нужно импортировать или получить доступ через контекст/сервис
+    const roomService = require('../../services/roomService'); 
     roomService.deleteRoom(currentRoom.id);
     logger.info(`Room ${currentRoom.id} deleted (empty)`);
   }
 
+  // Очищаем контекст
   context.currentUser = null;
   context.currentRoom = null;
+  // pingInterval уже очищен выше
 }
 
 module.exports = {
