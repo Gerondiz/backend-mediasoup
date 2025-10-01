@@ -10,7 +10,10 @@ module.exports = {
       : ['https://webrtc-video-conference-two.vercel.app', 'http://20.0.0.107:3000', 'https://sfu.ddns.net'],
     useHttps: process.env.USE_HTTPS === 'true' || false,
     certFile: process.env.CERT_FILE || 'cert.pem',
-    keyFile: process.env.KEY_FILE || 'key.pem'
+    keyFile: process.env.KEY_FILE || 'key.pem',
+    useCloudflareTunnel: process.env.USE_CLOUDFLARE_TUNNEL === 'true',
+    cloudflareTunnelName: process.env.CLOUDFLARE_TUNNEL_NAME || 'sfu-tunnel',
+    vercelApiUrl: process.env.VERCEL_API_URL || 'https://webrtc-video-conference-two.vercel.app/api/tunnel-url',
   },
   logging: {
     level: process.env.LOG_LEVEL || 'info'

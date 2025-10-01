@@ -2,6 +2,9 @@
 require('dotenv').config();
 const logger = require('./utils/logger');
 const { getExternalIP } = require('./utils/network');
+const TunnelManager = require('./tunnelManager'); // ✅ Импортируем менеджер туннеля
+
+const tunnelManager = new TunnelManager(); // ✅ Создаём экземпляр
 
 async function setupEnvironment() {
   if (!process.env.ANNOUNCED_IP) {
@@ -10,13 +13,13 @@ async function setupEnvironment() {
       const externalIP = await getExternalIP();
       process.env.ANNOUNCED_IP = externalIP;
       logger.info(`🌐 Auto-detected and set ANNOUNCED_IP to: ${externalIP}`);
-      
+
       // --- ВАЖНО: Обновляем конфигурацию mediasoup ---
       const config = require('./config');
       // Обновляем объект напрямую
       config.mediasoup.webRtcTransport.listenIps[0].announcedIp = externalIP;
       logger.info(`🔧 Updated mediasoup webRtcTransport announcedIp to: ${externalIP}`);
-      
+
     } catch (ipError) {
       logger.error('❌ Failed to auto-detect external IP:', ipError.message);
       logger.warn('⚠️ Server may not work correctly for WebRTC. Please set ANNOUNCED_IP manually.');
@@ -34,6 +37,9 @@ async function startServer() {
   try {
     await setupEnvironment();
 
+    // ✅ Запускаем туннель *до* запуска сервера
+    await tunnelManager.startTunnel();
+
     // Теперь безопасно импортируем App
     const App = require('./app');
 
@@ -42,17 +48,21 @@ async function startServer() {
 
   } catch (error) {
     logger.error('Failed to start server:', error);
+    // ✅ Останавливаем туннель при ошибке
+    tunnelManager.stopTunnel();
     process.exit(1);
   }
 }
 
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception:', error);
+  tunnelManager.stopTunnel(); // ✅ Останавливаем туннель
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  tunnelManager.stopTunnel(); // ✅ Останавливаем туннель
   process.exit(1);
 });
 
