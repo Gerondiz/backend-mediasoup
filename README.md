@@ -4,7 +4,7 @@
 # Server
 HOST=0.0.0.0
 PORT=443
-USE_HTTPS=true
+USE_HTTPS=false
 ALLOWED_ORIGINS=https://webrtc-video-conference-two.vercel.app
 CERT_FILE=/etc/letsencrypt/live/sfu.ddns.net/fullchain.pem
 KEY_FILE=/etc/letsencrypt/live/sfu.ddns.net/privkey.pem
@@ -31,8 +31,8 @@ MEDIASOUP_MAX_INCOMING_BITRATE=1500000
 MEDIASOUP_INITIAL_OUTGOING_BITRATE=1000000
 
 # TURN Server
-TURN_USERNAME=
-TURN_CREDENTIAL=
+TURN_USERNAME=turnuser
+TURN_CREDENTIAL=12345678
 TURN_URLS=turn:sfu.ddns.net:80,turn:sfu.ddns.net:80?transport=tcp
 
 
@@ -40,6 +40,7 @@ TURN_URLS=turn:sfu.ddns.net:80,turn:sfu.ddns.net:80?transport=tcp
 
 # Основные настройки
 listening-port=80
+# tls-listening-port=443 # Только если нужен TLS для TURN
 listening-ip=0.0.0.0
 external-ip=109.238.92.48
 realm=sfu.ddns.net
