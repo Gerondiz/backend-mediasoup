@@ -8,7 +8,7 @@ class MediasoupService {
     this.workers = [];
     this.nextWorkerIndex = 0;
     // Добавляем ссылку на ICE сервера из основной конфигурации
-    this.iceServers = require('../config').turn.servers;
+    this.iceServers = require('../config').turn.turnServers;
   }
 
   async initialize() {
@@ -46,7 +46,7 @@ class MediasoupService {
   getWebRtcTransportOptions() {
     return {
       ...config.webRtcTransport,
-      iceServers: this.iceServers // Добавляем ICE сервера от Metered
+      iceServers: this.iceServers
     };
   }
 }
