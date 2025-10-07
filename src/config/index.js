@@ -36,13 +36,11 @@ module.exports = {
           announcedIp: process.env.ANNOUNCED_IP // Будет перезаписан в server.js
         }
       ],
-      enableTcp: process.env.MEDIASOUP_ENABLE_TCP === 'true',
-      preferTcp: process.env.MEDIASOUP_PREFER_TCP === 'false',
-      enableUdp: process.env.MEDIASOUP_ENABLE_UDP !== 'true',
-      preferUdp: process.env.MEDIASOUP_PREFER_UDP !== 'true',
-
-      maxIncomingBitrate: parseInt(process.env.MEDIASOUP_MAX_INCOMING_BITRATE, 10) || 1500000,
-      initialAvailableOutgoingBitrate: parseInt(process.env.MEDIASOUP_INITIAL_OUTGOING_BITRATE, 10) || 1000000
+      enableUdp: true,
+      enableTcp: true,
+      preferUdp: true,
+      maxIncomingBitrate: 1500000,
+      initialAvailableOutgoingBitrate: 1000000
     }
   },
   turn: {
