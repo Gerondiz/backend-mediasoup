@@ -103,7 +103,7 @@ if pm2 restart sfu-server; then
     echo "Application restarted."
 else
     echo "Application not found, starting..."
-    pm2 start npm --name "sfu-server" -- start
+    sudo pm2 start src/server.js --name sfu-server --node-args="--max_old_space_size=4096"
 fi
 
 echo "Deployment completed successfully!"
