@@ -75,6 +75,15 @@ const validators = {
     return {}; // Возвращаем пустой объект
   },
 
+    'mic-status-changed': (data) => {
+    if (!data || typeof data !== 'object') throw new Error('Invalid data format');
+    if (typeof data.userId !== 'string' || !data.userId.trim()) throw new Error('User ID is required');
+    if (typeof data.isMuted !== 'boolean') throw new Error('isMuted must be a boolean');
+    return {
+      userId: data.userId.trim(),
+      isMuted: data.isMuted
+    };
+  },
 
 };
 

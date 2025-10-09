@@ -1,6 +1,7 @@
+// handlers/mediaHandler.js
 const logger = require('../../utils/logger');
 
-// handlers/mediaHandler.js
+
 async function handleProduce(data, context) {
   const { transportId, kind, rtpParameters } = data;
   const { currentRoom, currentUser, sendError, sendToClient, broadcastToRoom } = context;

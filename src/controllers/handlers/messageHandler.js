@@ -1,3 +1,4 @@
+// controllers/handlers/messageHandler.js
 const roomHandler = require('./roomHandler');
 const transportHandler = require('./transportHandler');
 const mediaHandler = require('./mediaHandler');
@@ -58,6 +59,9 @@ function setupMessageHandlers(context) {
           break;
         case 'get-chat-history':
           await chatHandler.handleGetChatHistory(context);
+          break;
+        case 'mic-status-changed':
+          await roomHandler.handleMicStatusChanged(validatedData, context);
           break;
         default:
           logger.warn('Unknown message type:', message.type);

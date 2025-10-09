@@ -146,7 +146,7 @@ function handleUserDisconnect(context) {
   if (currentRoom.isEmpty()) {
     // Предполагается, что roomService импортирован или доступен
     // Если нет, нужно импортировать или получить доступ через контекст/сервис
-    const roomService = require('../../services/roomService'); 
+    const roomService = require('../../services/roomService');
     roomService.deleteRoom(currentRoom.id);
     logger.info(`Room ${currentRoom.id} deleted (empty)`);
   }
@@ -157,8 +157,50 @@ function handleUserDisconnect(context) {
   // pingInterval уже очищен выше
 }
 
+async function handleMicStatusChanged(data, context) {
+  const { userId, isMuted } = data;
+  const { currentUser, currentRoom, ws } = context;
+
+  // Проверка: пользователь должен быть в комнате
+  if (!currentRoom || !currentUser) {
+    context.sendError('Not in a room');
+    return;
+  }
+
+  // Защита от подмены: можно обновлять только свой статус
+  if (userId !== currentUser.id) {
+    context.sendError('Cannot update another user\'s mic status');
+    return;
+  }
+
+  // Формируем сообщение для рассылки
+  const micStatusMessage = {
+    type: 'mic-status-changed',
+    data:{
+      userId: currentUser.id,
+      isMuted: isMuted
+    }
+};
+
+// Рассылаем всем в комнате, кроме отправителя
+for (const user of currentRoom.users.values()) {
+  if (
+    user.id !== currentUser.id &&
+    user.socket &&
+    user.socket.readyState === user.socket.OPEN
+  ) {
+    user.socket.send(JSON.stringify(micStatusMessage));
+  }
+}
+
+logger.info(
+  `User ${currentUser.username} updated mic status to ${isMuted ? 'muted' : 'unmuted'}`
+);
+}
+
 module.exports = {
   handleJoinRoom,
   handleLeaveRoom,
-  handleUserDisconnect
+  handleUserDisconnect,
+  handleMicStatusChanged
 };
